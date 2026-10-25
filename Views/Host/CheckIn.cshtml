@@ -1,0 +1,71 @@
+@model CheckInSetupViewModel
+@{ ViewData["Title"] = "Check-in Setup"; }
+
+<partial name="_Alerts" />
+<a asp-action="Properties" class="text-decoration-none">&larr; My Properties</a>
+<h4 class="mt-2 mb-1">@Model.PropertyTitle</h4>
+<p class="text-muted">
+    Define the steps guests complete before arrival.
+    <strong>Document</strong> steps ask the guest to upload a file for you to verify,
+    <strong>Agreement</strong> steps hold rules they must accept, and
+    <strong>Information</strong> steps are notes for the guest.
+</p>
+
+<form asp-action="CheckIn" asp-route-id="@Model.PropertyId" method="post">
+    <div asp-validation-summary="All" class="alert alert-danger"></div>
+    <input type="hidden" asp-for="PropertyId" />
+
+    <div class="dash-card mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div id="steps">
+        @foreach (var step in Model.Steps)
+        {
+            <partial name="_CheckInStepRow" model="step" />
+        }
+    </div>
+
+    <button type="button" id="add-step" class="btn btn-outline-dark mb-4"><i class="fa-solid fa-plus"></i> Add step</button>
+
+    <div class="d-flex gap-2 mb-5">
+        <a asp-action="Properties" class="btn btn-outline-dark">Cancel</a>
+        <button type="submit" class="btn btn-brand flex-grow-1">Save check-in process</button>
+    </div>
+</form>
+
+<template id="step-template">
+    <partial name="_CheckInStepRow" model="new CheckInStep()" />
+</template>
+
+@section Scripts {
+    <script>
+        const steps = document.getElementById('steps');
+        const template = document.getElementById('step-template');
+
+        // Give every field a Steps[i].Field name so MVC binds the list in order
+        function reindex() {
+            steps.querySelectorAll('.step-row').forEach((row, i) => {
+                row.querySelector('.step-no').textContent = i + 1;
+                row.querySelectorAll('[data-field]').forEach(el => el.name = `Steps[${i}].${el.dataset.field}`);
+                const isDocument = row.querySelector('.step-type').value === 'Document';
+                row.querySelector('.doc-field').style.display = isDocument ? '' : 'none';
+            });
+        }
+
+        document.getElementById('add-step').addEventListener('click', () => {
+            steps.appendChild(template.content.cloneNode(true));
+            reindex();
+        });
+        steps.addEventListener('click', e => {
+            const btn = e.target.closest('.remove-step');
+            if (btn) { btn.closest('.step-row').remove(); reindex(); }
+        });
+        steps.addEventListener('change', e => {
+            if (e.target.classList.contains('step-type')) reindex();
+        });
+        reindex();
+    </script>
+}

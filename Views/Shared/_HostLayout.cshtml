@@ -1,0 +1,51 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var me = await UserManager.GetUserAsync(User);
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    string Active(string c, params string[] actions) =>
+        controller == c && (actions.Length == 0 || actions.Contains(action)) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Staybnb Host</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="dash">
+    <aside class="dash-sidebar">
+        <a class="dash-brand" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house-chimney"></i> staybnb <span>host</span></a>
+        <nav>
+            <a class="@Active("Host", "Dashboard")" asp-controller="Host" asp-action="Dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+            <a class="@Active("Host", "Properties", "Edit", "CheckIn")" asp-controller="Host" asp-action="Properties"><i class="fa-solid fa-house"></i> My Properties</a>
+            <a class="@Active("HostApplication", "Create")" asp-controller="HostApplication" asp-action="Create"><i class="fa-solid fa-plus"></i> Add Property</a>
+            <a class="@Active("HostApplication", "Status")" asp-controller="HostApplication" asp-action="Status"><i class="fa-solid fa-file-lines"></i> Applications</a>
+        </nav>
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            <button type="submit" class="dash-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </form>
+    </aside>
+
+    <div class="dash-main">
+        <header class="dash-header">
+            <h1>@ViewData["Title"]</h1>
+            <div class="dash-user">
+                <span class="avatar">@(me?.FirstName.FirstOrDefault())</span>
+                <div><strong>@me?.FullName</strong><small>Host</small></div>
+            </div>
+        </header>
+        <main class="dash-content">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

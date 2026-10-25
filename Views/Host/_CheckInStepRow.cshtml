@@ -1,0 +1,30 @@
+@model CheckInStep
+<div class="dash-card mb-3 step-row">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <strong>Step <span class="step-no"></span></strong>
+        <button type="button" class="btn btn-sm btn-outline-danger remove-step" title="Remove step"><i class="fa-solid fa-trash"></i></button>
+    </div>
+    <div class="row g-2">
+        <div class="col-md-5">
+            <label class="form-label small">Step name</label>
+            <input class="form-control" data-field="Name" value="@Model.Name" maxlength="100" placeholder="e.g. Upload ID or Passport" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Type</label>
+            <select class="form-select step-type" data-field="StepType">
+                @foreach (var t in Enum.GetValues<CheckInStepType>())
+                {
+                    <option value="@t" selected="@(t == Model.StepType)">@t</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4 doc-field">
+            <label class="form-label small">Document required</label>
+            <input class="form-control" data-field="DocumentType" value="@Model.DocumentType" maxlength="100" placeholder="e.g. ID or Passport" />
+        </div>
+        <div class="col-12">
+            <label class="form-label small">Instructions or rules</label>
+            <textarea class="form-control" rows="2" data-field="Description" maxlength="1000">@Model.Description</textarea>
+        </div>
+    </div>
+</div>

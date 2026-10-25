@@ -1,0 +1,80 @@
+:root {
+    --brand: #FF385C;
+    --brand-dark: #E31C5F;
+    --ink: #222;
+    --muted: #717171;
+    --line: #ebebeb;
+    --bg: #f7f7f7;
+}
+
+body.dash { background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+/* Sidebar */
+.dash-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 230px;
+    background: #fff; border-right: 1px solid var(--line);
+    padding: 20px 14px; display: flex; flex-direction: column; z-index: 20;
+}
+.dash-brand { color: var(--brand); font-weight: 700; font-size: 1.3rem; text-decoration: none; padding: 0 10px 22px; }
+.dash-brand:hover { color: var(--brand-dark); }
+.dash-brand span { color: var(--ink); font-weight: 600; }
+.dash-sidebar nav a, .dash-logout {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    border-radius: 8px; color: var(--ink); text-decoration: none; font-size: .92rem;
+    margin-bottom: 2px; border: 0; background: none; width: 100%; text-align: left;
+}
+.dash-sidebar nav a i { width: 18px; color: var(--muted); }
+.dash-sidebar nav a:hover { background: var(--bg); }
+.dash-sidebar nav a.active { background: #fff0f3; color: var(--brand); font-weight: 600; }
+.dash-sidebar nav a.active i { color: var(--brand); }
+.dash-logout { color: var(--brand); margin-top: 8px; }
+.dash-logout:hover { background: #fff0f3; }
+
+/* Main area */
+.dash-main { margin-left: 230px; }
+.dash-header {
+    background: #fff; border-bottom: 1px solid var(--line); padding: 14px 28px;
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 10;
+}
+.dash-header h1 { font-size: 1.25rem; margin: 0; font-weight: 700; }
+.dash-user { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 30px; padding: 4px 14px 4px 4px; }
+.dash-user .avatar { width: 32px; height: 32px; border-radius: 50%; background: #e9e9e9; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.dash-user small { display: block; color: var(--muted); font-size: .75rem; line-height: 1; }
+.dash-content { padding: 24px 28px; }
+
+/* Cards and stats */
+.dash-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+.stat-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px; height: 100%; }
+.stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+.bg-soft-blue { background: #e8f1ff; color: #1a73e8; }
+.bg-soft-purple { background: #f3e8ff; color: #8e44ad; }
+.bg-soft-green { background: #e6f6ec; color: #1e8e3e; }
+.bg-soft-orange { background: #fff4e5; color: #f29900; }
+.stat-value { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+.stat-label { color: var(--muted); font-size: .85rem; }
+.stat-sub { font-size: .78rem; margin-top: 4px; }
+.metric { background: var(--bg); border-radius: 10px; padding: 16px; text-align: center; }
+.metric strong { display: block; font-size: 1.4rem; color: var(--brand); }
+.metric span { color: var(--muted); font-size: .8rem; }
+
+/* Buttons and text */
+.text-brand { color: var(--brand) !important; }
+.btn-brand { background: var(--brand); color: #fff; border: 0; }
+.btn-brand:hover { background: var(--brand-dark); color: #fff; }
+.btn-outline-brand { border: 1px solid var(--line); color: var(--brand); background: #fff; }
+.btn-outline-brand:hover { background: #fff0f3; color: var(--brand); }
+
+/* Property cards */
+.prop-thumb { width: 100%; height: 100%; min-height: 170px; max-height: 210px; object-fit: cover; }
+.photo-count { position: absolute; left: 10px; bottom: 10px; background: rgba(0,0,0,.65); color: #fff; font-size: .75rem; padding: 2px 8px; border-radius: 6px; }
+.photo-pick img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; }
+
+.validation-summary-valid { display: none; }
+
+@media (max-width: 991px) {
+    .dash-sidebar { position: static; width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; }
+    .dash-sidebar nav { display: flex; flex-wrap: wrap; }
+    .dash-sidebar nav a, .dash-logout { width: auto; }
+    .dash-main { margin-left: 0; }
+}
