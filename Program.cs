@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Staybnb.Data;
 using Staybnb.Models;
+using Staybnb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,23 +12,34 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<ApplicationUser>(o =>
+// Identity with our own Account pages (no default Identity UI)
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(o =>
     {
         o.SignIn.RequireConfirmedAccount = false;
-        o.Password.RequiredLength = 6;
         o.User.RequireUniqueEmail = true;
+        o.Password.RequiredLength = 6;
+        o.Lockout.MaxFailedAccessAttempts = 5;
+        o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+// Re-read roles from the database on every request,
+// so a Guest approved as Host sees the Host UI without logging out
+builder.Services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.Zero);
 
 builder.Services.ConfigureApplicationCookie(o =>
 {
-    o.LoginPath = "/Identity/Account/Login";
-    o.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    o.LoginPath = "/Account/Login";
+    o.LogoutPath = "/Account/Logout";
+    o.AccessDeniedPath = "/Account/AccessDenied";
 });
 
+builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -56,6 +68,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
 
 app.Run();
