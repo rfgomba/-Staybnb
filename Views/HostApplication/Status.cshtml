@@ -1,0 +1,61 @@
+@model List<HostApplication>
+@{
+    ViewData["Title"] = "Host Application Status";
+    var isHost = User.IsInRole(AppRoles.Host);
+    var hasPending = Model.Any(a => a.Status == ApplicationStatus.Pending);
+}
+
+<partial name="_Alerts" />
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">@(isHost ? "My Applications" : "Host Application Status")</h2>
+    @if (isHost || !hasPending)
+    {
+        <a asp-action="Create" class="btn btn-danger">@(isHost ? "List another property" : "Apply to host")</a>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">You have not applied yet.</p>
+}
+
+@foreach (var a in Model)
+{
+    var badge = a.Status switch
+    {
+        ApplicationStatus.Approved => "bg-success",
+        ApplicationStatus.Rejected => "bg-danger",
+        _ => "bg-warning text-dark"
+    };
+    var img = a.Property?.Images.FirstOrDefault()?.ImageUrl;
+
+    <div class="card mb-3 shadow-sm overflow-hidden">
+        <div class="row g-0">
+            <div class="col-md-3">
+                @if (img != null)
+                {
+                    <img src="@img" alt="" style="width:100%;height:160px;object-fit:cover" />
+                }
+            </div>
+            <div class="col-md-9">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h5 class="card-title">@a.Property?.Title</h5>
+                        <span class="badge @badge align-self-start">@a.Status</span>
+                    </div>
+                    <p class="text-muted mb-1">@a.Property?.City, R @a.Property?.PricePerNight.ToString("N0") per night</p>
+                    <small class="text-muted">Applied @a.AppliedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</small>
+
+                    @if (a.Status == ApplicationStatus.Rejected && !string.IsNullOrEmpty(a.AdminComment))
+                    {
+                        <div class="alert alert-danger mt-2 mb-0 py-2">Reason: @a.AdminComment</div>
+                    }
+                    @if (a.Status == ApplicationStatus.Approved && isHost)
+                    {
+                        <div><a asp-controller="Host" asp-action="Dashboard" class="btn btn-sm btn-outline-dark mt-2">Go to Host Dashboard</a></div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

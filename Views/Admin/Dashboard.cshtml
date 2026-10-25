@@ -1,3 +1,5 @@
 @{ ViewData["Title"] = "Admin Dashboard"; }
+<partial name="_Alerts" />
 <h2>Admin Dashboard</h2>
-<p>Only Admins and the SuperAdmin can see this page. Full dashboard comes in Step 6.</p>
+<p>Full dashboard comes in Step 6.</p>
+<a asp-action="Applications" class="btn btn-danger">Review Host Requests</a>

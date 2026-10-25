@@ -1,0 +1,51 @@
+@model List<HostApplication>
+@{
+    ViewData["Title"] = "Host Requests";
+    var current = ViewBag.Status as string ?? "Pending";
+}
+
+<partial name="_Alerts" />
+<h2 class="mb-3">Host Requests</h2>
+
+<ul class="nav nav-tabs mb-3">
+    @foreach (var s in new[] { "Pending", "Approved", "Rejected", "All" })
+    {
+        <li class="nav-item">
+            <a class="nav-link @(s == current ? "active" : "")" asp-action="Applications" asp-route-status="@s">@s</a>
+        </li>
+    }
+</ul>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No applications here.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr><th>Applicant</th><th>Property</th><th>City</th><th>Applied</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var a in Model)
+            {
+                var badge = a.Status switch
+                {
+                    ApplicationStatus.Approved => "bg-success",
+                    ApplicationStatus.Rejected => "bg-danger",
+                    _ => "bg-warning text-dark"
+                };
+                <tr>
+                    <td><strong>@a.ApplicationUser?.FullName</strong><br /><small class="text-muted">@a.ApplicationUser?.Email</small></td>
+                    <td>@a.Property?.Title</td>
+                    <td>@a.Property?.City</td>
+                    <td>@a.AppliedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                    <td><span class="badge @badge">@a.Status</span></td>
+                    <td class="text-end"><a asp-action="ApplicationDetails" asp-route-id="@a.Id" class="btn btn-sm btn-outline-dark">Review</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

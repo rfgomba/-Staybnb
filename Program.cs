@@ -1,4 +1,6 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Staybnb.Data;
 using Staybnb.Models;
@@ -38,10 +40,19 @@ builder.Services.ConfigureApplicationCookie(o =>
 builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+// South African formatting (R currency) but with "." decimals,
+// so prices like 1500.50 bind correctly on Windows set to en-ZA
+var culture = (CultureInfo)CultureInfo.GetCultureInfo("en-ZA").Clone();
+culture.NumberFormat.NumberDecimalSeparator = ".";
+culture.NumberFormat.CurrencyDecimalSeparator = ".";
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 // Apply migrations and seed roles, SuperAdmin and amenities on startup
 using (var scope = app.Services.CreateScope())
@@ -60,6 +71,13 @@ else
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(culture),
+    SupportedCultures = new List<CultureInfo> { culture },
+    SupportedUICultures = new List<CultureInfo> { culture }
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
