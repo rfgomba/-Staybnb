@@ -29,6 +29,10 @@
         <div class="host-avatar mx-auto">@(p.Host?.FirstName.FirstOrDefault())</div>
         <div class="small fw-semibold mt-1">@p.Host?.FullName</div>
         <span class="badge bg-danger">Verified Host</span>
+        @if (User.Identity?.IsAuthenticated != true || User.IsInRole(AppRoles.Guest))
+        {
+            <div><a asp-controller="Messages" asp-action="Index" asp-route-with="@p.HostId" class="btn btn-sm btn-outline-dark mt-2"><i class="fa-solid fa-envelope"></i> Contact host</a></div>
+        }
     </div>
 </div>
 

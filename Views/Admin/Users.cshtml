@@ -63,6 +63,10 @@
                     </td>
                     <td class="text-end">
                         <div class="d-inline-flex gap-1">
+                            @if (u.Id != Model.CurrentUserId)
+                            {
+                                <a asp-controller="Messages" asp-action="Index" asp-route-with="@u.Id" class="btn btn-sm btn-outline-dark" title="Message"><i class="fa-solid fa-envelope"></i></a>
+                            }
                             @if (Model.IsSuperAdmin && row.IsGuest)
                             {
                                 <form asp-action="PromoteToAdmin" asp-route-id="@u.Id" method="post" onsubmit="return confirm('Promote @u.FullName to Admin?');">

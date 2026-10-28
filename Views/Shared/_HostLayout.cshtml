@@ -5,6 +5,7 @@
     var me = await UserManager.GetUserAsync(User);
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var unreadNotifications = me == null ? 0 : Db.Notifications.Count(n => n.UserId == me.Id && !n.IsRead);
     var pendingRequests = me == null ? 0 : Db.Bookings.Count(b => b.Property!.HostId == me.Id && b.Status == BookingStatus.Pending);
     string Active(string c, params string[] actions) =>
         controller == c && (actions.Length == 0 || actions.Contains(action)) ? "active" : "";
@@ -30,6 +31,10 @@
             </a>
             <a class="@Active("HostApplication", "Create")" asp-controller="HostApplication" asp-action="Create"><i class="fa-solid fa-plus"></i> Add Property</a>
             <a class="@Active("HostApplication", "Status")" asp-controller="HostApplication" asp-action="Status"><i class="fa-solid fa-file-lines"></i> Applications</a>
+            <a class="@Active("Messages")" asp-controller="Messages" asp-action="Index"><i class="fa-solid fa-envelope"></i> Messages</a>
+            <a class="@Active("Notifications")" asp-controller="Notifications" asp-action="Index"><i class="fa-solid fa-bell"></i> Notifications
+                @if (unreadNotifications > 0) { <span class="badge bg-danger ms-auto">@unreadNotifications</span> }
+            </a>
         </nav>
         <form asp-controller="Account" asp-action="Logout" method="post">
             <button type="submit" class="dash-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
@@ -39,9 +44,12 @@
     <div class="dash-main">
         <header class="dash-header">
             <h1>@ViewData["Title"]</h1>
+            <div class="d-flex align-items-center gap-3">
+            @await Component.InvokeAsync("HeaderIcons")
             <div class="dash-user">
                 <span class="avatar">@(me?.FirstName.FirstOrDefault())</span>
                 <div><strong>@me?.FullName</strong><small>Host</small></div>
+            </div>
             </div>
         </header>
         <main class="dash-content">

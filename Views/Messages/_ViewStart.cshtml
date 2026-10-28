@@ -1,0 +1,5 @@
+@{
+    Layout = User.IsInRole(Staybnb.Models.AppRoles.Admin) || User.IsInRole(Staybnb.Models.AppRoles.SuperAdmin) ? "_AdminLayout"
+           : User.IsInRole(Staybnb.Models.AppRoles.Host) ? "_HostLayout"
+           : "_Layout";
+}

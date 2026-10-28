@@ -1,0 +1,44 @@
+@model HeaderIconsViewModel
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<style>
+    .header-icons { display: flex; align-items: center; gap: 4px; }
+    .header-icon { position: relative; color: #222; font-size: 1.1rem; padding: 6px 9px; background: none; border: 0; text-decoration: none; }
+    .header-icon:hover { color: #FF385C; }
+    .header-icon .count { position: absolute; top: 0; right: 0; background: #FF385C; color: #fff; border-radius: 10px; font-size: .6rem; padding: 1px 5px; font-weight: 700; }
+    .notif-menu { width: 320px; }
+    .notif-menu .item { white-space: normal; font-size: .85rem; }
+    .notif-menu .item.unread { background: #fff0f3; }
+</style>
+
+<div class="header-icons">
+    <a asp-controller="Messages" asp-action="Index" class="header-icon" title="Messages">
+        <i class="fa-solid fa-envelope"></i>
+        @if (Model.UnreadMessages > 0) { <span class="count">@Model.UnreadMessages</span> }
+    </a>
+
+    <div class="dropdown">
+        <button class="header-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+            <i class="fa-solid fa-bell"></i>
+            @if (Model.UnreadNotifications > 0) { <span class="count">@Model.UnreadNotifications</span> }
+        </button>
+        <div class="dropdown-menu dropdown-menu-end notif-menu p-0 shadow">
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                <strong>Notifications</strong>
+                <a asp-controller="Notifications" asp-action="Index" class="small">See all</a>
+            </div>
+            @if (!Model.Latest.Any())
+            {
+                <div class="px-3 py-3 small text-muted">You're all caught up.</div>
+            }
+            @foreach (var n in Model.Latest)
+            {
+                var (icon, css) = Ui.NotificationIcon(n.Type);
+                <a class="dropdown-item item py-2 @(n.IsRead ? "" : "unread")" asp-controller="Notifications" asp-action="Open" asp-route-id="@n.Id">
+                    <span class="badge @css me-1"><i class="fa-solid @icon"></i></span>
+                    <strong>@n.Title</strong> <small class="text-muted float-end">@Ui.TimeAgo(n.CreatedAt)</small>
+                    <div class="text-muted small text-truncate">@n.Body</div>
+                </a>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,116 @@
+@model InboxViewModel
+@{
+    ViewData["Title"] = "Messages";
+    var inDashboard = !User.IsInRole(AppRoles.Guest);
+}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<style>
+    .inbox { display: grid; grid-template-columns: 300px 1fr; border: 1px solid #ebebeb; border-radius: 14px; overflow: hidden; background: #fff; min-height: 520px; }
+    .inbox-list { border-right: 1px solid #ebebeb; overflow-y: auto; max-height: 640px; }
+    .inbox-item { display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #f3f3f3; text-decoration: none; color: #222; }
+    .inbox-item:hover { background: #fafafa; }
+    .inbox-item.active { background: #fff0f3; }
+    .inbox-avatar { width: 38px; height: 38px; border-radius: 50%; background: #e9e9e9; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; }
+    .inbox-thread { display: flex; flex-direction: column; }
+    .thread-head { padding: 12px 18px; border-bottom: 1px solid #ebebeb; }
+    .thread-body { flex: 1; padding: 18px; overflow-y: auto; max-height: 460px; background: #fafafa; }
+    .bubble { max-width: 70%; padding: 9px 13px; border-radius: 16px; margin-bottom: 4px; white-space: pre-line; }
+    .bubble.mine { background: #FF385C; color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+    .bubble.theirs { background: #fff; border: 1px solid #ebebeb; border-bottom-left-radius: 4px; }
+    .bubble-time { font-size: .7rem; color: #999; margin-bottom: 10px; }
+    .thread-foot { padding: 12px 18px; border-top: 1px solid #ebebeb; }
+    @@media (max-width: 768px) { .inbox { grid-template-columns: 1fr; } .inbox-list { max-height: 220px; } }
+</style>
+
+<partial name="_Alerts" />
+
+@if (!inDashboard)
+{
+    <h2 class="mb-3">Messages</h2>
+}
+
+<div class="d-flex justify-content-end mb-2">
+    @if (Model.SupportUserId != null && Model.SupportUserId != Model.CurrentUserId)
+    {
+        <a asp-action="Index" asp-route-with="@Model.SupportUserId" class="btn btn-sm btn-outline-dark"><i class="fa-solid fa-headset"></i> Contact Staybnb support</a>
+    }
+</div>
+
+<div class="inbox">
+    <div class="inbox-list">
+        @if (!Model.Conversations.Any())
+        {
+            <div class="p-3 text-muted small">No conversations yet. Use "Contact host" on a listing to start one.</div>
+        }
+        @foreach (var c in Model.Conversations)
+        {
+            var active = Model.With?.Id == c.Other.Id ? "active" : "";
+            <a asp-action="Index" asp-route-with="@c.Other.Id" class="inbox-item @active">
+                <span class="inbox-avatar">@Ui.Initials(c.Other)</span>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="d-flex justify-content-between">
+                        <strong class="text-truncate">@c.Other.FullName</strong>
+                        @if (c.Last != null) { <small class="text-muted text-nowrap ms-1">@Ui.TimeAgo(c.Last.Timestamp)</small> }
+                    </div>
+                    <div class="small text-muted text-truncate">
+                        @if (c.Last == null) { <em>New conversation</em> }
+                        else { <text>@(c.Last.SenderId == Model.CurrentUserId ? "You: " : "")@c.Last.Content</text> }
+                    </div>
+                </div>
+                @if (c.Unread > 0) { <span class="badge bg-danger align-self-center">@c.Unread</span> }
+            </a>
+        }
+    </div>
+
+    <div class="inbox-thread">
+        @if (Model.With == null)
+        {
+            <div class="m-auto text-muted"><i class="fa-regular fa-comments fa-2x d-block text-center mb-2"></i>Select a conversation</div>
+        }
+        else
+        {
+            <div class="thread-head d-flex align-items-center gap-2">
+                <span class="inbox-avatar">@Ui.Initials(Model.With)</span>
+                <div><strong>@Model.With.FullName</strong><div class="small text-muted">@Model.With.Email</div></div>
+            </div>
+
+            <div class="thread-body" id="thread">
+                @if (!Model.Thread.Any())
+                {
+                    <p class="text-muted small text-center">No messages yet. Say hello!</p>
+                }
+                @foreach (var m in Model.Thread)
+                {
+                    var mine = m.SenderId == Model.CurrentUserId;
+                    <div class="bubble @(mine ? "mine" : "theirs")">@m.Content</div>
+                    <div class="bubble-time @(mine ? "text-end" : "")">
+                        @m.Timestamp.ToLocalTime().ToString("dd MMM HH:mm")
+                        @if (mine) { <span>@(m.IsRead ? " · Read" : " · Sent")</span> }
+                    </div>
+                }
+            </div>
+
+            <div class="thread-foot">
+                @if (Model.CanSend)
+                {
+                    <form asp-action="Send" method="post" class="d-flex gap-2">
+                        <input type="hidden" name="receiverId" value="@Model.With.Id" />
+                        <textarea name="content" class="form-control" rows="2" maxlength="2000" placeholder="Write a message..." required></textarea>
+                        <button type="submit" class="btn btn-danger align-self-end"><i class="fa-solid fa-paper-plane"></i></button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted small mb-0">You can't message this user.</p>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const thread = document.getElementById('thread');
+        if (thread) thread.scrollTop = thread.scrollHeight;
+    </script>
+}

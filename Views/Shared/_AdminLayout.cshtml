@@ -5,8 +5,11 @@
     var me = await UserManager.GetUserAsync(User);
     var roleLabel = User.IsInRole(AppRoles.SuperAdmin) ? "SuperAdmin" : "Administrator";
     var pendingApps = Db.HostApplications.Count(a => a.Status == ApplicationStatus.Pending);
+    var unreadNotifications = me == null ? 0 : Db.Notifications.Count(n => n.UserId == me.Id && !n.IsRead);
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
-    string Active(params string[] actions) => actions.Contains(action) ? "active" : "";
+    string Active(params string[] actions) => controller == "Admin" && actions.Contains(action) ? "active" : "";
+    string ActiveController(string c) => controller == c ? "active" : "";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -29,6 +32,10 @@
             </a>
             <a class="@Active("Bookings")" asp-controller="Admin" asp-action="Bookings"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
             <a class="@Active("Properties")" asp-controller="Admin" asp-action="Properties"><i class="fa-solid fa-house"></i> Properties</a>
+            <a class="@ActiveController("Messages")" asp-controller="Messages" asp-action="Index"><i class="fa-solid fa-envelope"></i> Messages</a>
+            <a class="@ActiveController("Notifications")" asp-controller="Notifications" asp-action="Index"><i class="fa-solid fa-bell"></i> Notifications
+                @if (unreadNotifications > 0) { <span class="badge bg-danger ms-auto">@unreadNotifications</span> }
+            </a>
             <a class="@Active("ActivityLogs")" asp-controller="Admin" asp-action="ActivityLogs"><i class="fa-solid fa-clock-rotate-left"></i> Activity Logs</a>
         </nav>
         <form asp-controller="Account" asp-action="Logout" method="post">
@@ -39,9 +46,12 @@
     <div class="dash-main">
         <header class="dash-header">
             <h1>@ViewData["Title"]</h1>
+            <div class="d-flex align-items-center gap-3">
+            @await Component.InvokeAsync("HeaderIcons")
             <div class="dash-user">
                 <span class="avatar">@Ui.Initials(me)</span>
                 <div><strong>@me?.FullName</strong><small>@roleLabel</small></div>
+            </div>
             </div>
         </header>
         <main class="dash-content">

@@ -48,4 +48,24 @@ public static class Ui
 
     public static string Initials(ApplicationUser? user) =>
         user == null ? "?" : $"{user.FirstName.FirstOrDefault()}{user.LastName.FirstOrDefault()}".ToUpper();
+
+    public static string TimeAgo(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        if (span.TotalMinutes < 1) return "just now";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m ago";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours}h ago";
+        if (span.TotalDays < 7) return $"{(int)span.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("dd MMM");
+    }
+
+    public static (string Icon, string Css) NotificationIcon(NotificationType type) => type switch
+    {
+        NotificationType.NewMessage => ("fa-envelope", "bg-primary"),
+        NotificationType.BookingRequested => ("fa-calendar-plus", "bg-warning text-dark"),
+        NotificationType.BookingApproved or NotificationType.HostApplicationApproved => ("fa-circle-check", "bg-success"),
+        NotificationType.BookingRejected or NotificationType.HostApplicationRejected => ("fa-circle-xmark", "bg-danger"),
+        NotificationType.CheckInUpdate => ("fa-id-card", "bg-info text-dark"),
+        _ => ("fa-bell", "bg-secondary")
+    };
 }

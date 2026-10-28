@@ -79,6 +79,7 @@
                     <button type="submit" class="btn btn-outline-danger">Cancel booking</button>
                 </form>
             }
+            <a asp-controller="Messages" asp-action="Index" asp-route-with="@p.HostId" class="btn btn-outline-dark"><i class="fa-solid fa-envelope"></i> Message host</a>
             <a asp-controller="Properties" asp-action="View" asp-route-id="@p.Id" class="btn btn-outline-dark">View listing</a>
         </div>
     </div>

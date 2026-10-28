@@ -29,6 +29,7 @@
         <li class="nav-item"><a class="nav-link text-dark" asp-controller="Guest" asp-action="Trips">My Trips</a></li>
     }
 
+    <li class="nav-item d-flex align-items-center">@await Component.InvokeAsync("HeaderIcons")</li>
     <li class="nav-item">
         <span class="nav-link text-dark">@appUser?.FullName <span class="badge bg-danger">@role</span></span>
     </li>

@@ -21,7 +21,8 @@
         <div class="dash-card mb-3">
             <h6 class="text-muted">Guest</h6>
             <p class="mb-0"><strong>@Model.Guest?.FullName</strong></p>
-            <p class="small text-muted mb-3">@Model.Guest?.Email</p>
+            <p class="small text-muted mb-2">@Model.Guest?.Email</p>
+            <a asp-controller="Messages" asp-action="Index" asp-route-with="@Model.GuestId" class="btn btn-sm btn-outline-dark mb-3"><i class="fa-solid fa-envelope"></i> Message guest</a>
             <div class="row small">
                 <div class="col-4"><span class="text-muted">Check-in</span><div class="fw-semibold">@Model.CheckInDate.ToString("dd MMM yyyy")</div></div>
                 <div class="col-4"><span class="text-muted">Checkout</span><div class="fw-semibold">@Model.CheckOutDate.ToString("dd MMM yyyy")</div></div>

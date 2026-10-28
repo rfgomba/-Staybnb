@@ -1,0 +1,109 @@
+@model NotificationsViewModel
+@{
+    ViewData["Title"] = "Notifications";
+    var inDashboard = !User.IsInRole(AppRoles.Guest);
+    var filters = new[]
+    {
+        ("all", "All", Model.AllCount, "#f1f1f1"),
+        ("unread", "Unread", Model.UnreadCount, "#ffe3e8"),
+        ("read", "Read", Model.ReadCount, "#e6f6ec"),
+        ("today", "Today", Model.TodayCount, "#fff4e5")
+    };
+}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<style>
+    .notif-wrap { background: #fff; border: 1px solid #ebebeb; border-radius: 14px; overflow: hidden; }
+    .notif-filter { display: inline-flex; flex-direction: column; align-items: center; min-width: 64px; padding: 6px 12px; border-radius: 20px; text-decoration: none; color: #222; font-size: .7rem; text-transform: uppercase; margin-right: 6px; border: 2px solid transparent; }
+    .notif-filter strong { font-size: 1rem; }
+    .notif-filter.active { border-color: #222; }
+    .notif-grid { display: grid; grid-template-columns: 360px 1fr; min-height: 460px; }
+    .notif-list { border-right: 1px solid #ebebeb; overflow-y: auto; max-height: 600px; }
+    .notif-item { display: block; padding: 12px 16px; border-bottom: 1px solid #f3f3f3; text-decoration: none; color: #222; border-left: 3px solid transparent; }
+    .notif-item.unread { background: #fff6f8; border-left-color: #FF385C; }
+    .notif-item.selected { background: #ffe9ee; }
+    .notif-detail { padding: 22px; }
+    @@media (max-width: 900px) { .notif-grid { grid-template-columns: 1fr; } }
+</style>
+
+<partial name="_Alerts" />
+@if (!inDashboard)
+{
+    <h2 class="mb-3">Notifications</h2>
+}
+
+<div class="notif-wrap">
+    <div class="d-flex justify-content-between align-items-center p-3 border-bottom flex-wrap gap-2">
+        <div>
+            <strong class="me-2">Notifications</strong>
+            @if (Model.UnreadCount > 0) { <span class="badge bg-danger">@Model.UnreadCount new</span> }
+            <div class="mt-2">
+                @foreach (var (key, label, count, color) in filters)
+                {
+                    <a asp-action="Index" asp-route-filter="@key" class="notif-filter @(Model.Filter == key ? "active" : "")" style="background:@color">
+                        <strong>@count</strong>@label
+                    </a>
+                }
+            </div>
+        </div>
+        <form asp-action="MarkAllRead" method="post">
+            <input type="hidden" name="filter" value="@Model.Filter" />
+            <button type="submit" class="btn btn-sm btn-outline-dark" disabled="@(Model.UnreadCount == 0)"><i class="fa-solid fa-check-double"></i> Mark all read</button>
+        </form>
+    </div>
+
+    <div class="notif-grid">
+        <div class="notif-list">
+            @if (!Model.Items.Any())
+            {
+                <div class="p-3 text-muted small">Nothing here.</div>
+            }
+            @foreach (var n in Model.Items)
+            {
+                var (icon, css) = Ui.NotificationIcon(n.Type);
+                var classes = $"{(n.IsRead ? "" : "unread")} {(Model.Selected?.Id == n.Id ? "selected" : "")}";
+                <a asp-action="Index" asp-route-filter="@Model.Filter" asp-route-selectedId="@n.Id" class="notif-item @classes">
+                    <div class="d-flex justify-content-between">
+                        <strong><span class="badge @css me-1"><i class="fa-solid @icon"></i></span> @n.Title</strong>
+                        <small class="text-muted text-nowrap">@Ui.TimeAgo(n.CreatedAt)</small>
+                    </div>
+                    <div class="small text-muted text-truncate mt-1">@n.Body</div>
+                    <span class="badge bg-light text-dark border mt-1">@n.Type</span>
+                </a>
+            }
+        </div>
+
+        <div class="notif-detail">
+            @if (Model.Selected == null)
+            {
+                <div class="text-muted text-center mt-5"><i class="fa-regular fa-bell fa-2x d-block mb-2"></i>Select a notification to read it</div>
+            }
+            else
+            {
+                var s = Model.Selected;
+                var (icon, css) = Ui.NotificationIcon(s.Type);
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-1"><span class="badge @css me-1"><i class="fa-solid @icon"></i></span> @s.Title</h5>
+                        <small class="text-muted">@s.CreatedAt.ToLocalTime().ToString("dd MMMM yyyy HH:mm") · @Ui.TimeAgo(s.CreatedAt)</small>
+                    </div>
+                    <span class="badge @(s.IsRead ? "bg-success" : "bg-danger")">@(s.IsRead ? "READ" : "UNREAD")</span>
+                </div>
+                <div class="border rounded p-3 my-3">@s.Body</div>
+                <div class="d-flex gap-2">
+                    @if (!string.IsNullOrEmpty(s.Link))
+                    {
+                        <a asp-action="Open" asp-route-id="@s.Id" class="btn btn-danger"><i class="fa-solid fa-arrow-up-right-from-square"></i> Take Action</a>
+                    }
+                    <form asp-action="MarkUnread" asp-route-id="@s.Id" method="post">
+                        <input type="hidden" name="filter" value="@Model.Filter" />
+                        <button type="submit" class="btn btn-outline-dark"><i class="fa-solid fa-envelope"></i> Mark unread</button>
+                    </form>
+                    <form asp-action="Delete" asp-route-id="@s.Id" method="post" onsubmit="return confirm('Delete this notification?');">
+                        <input type="hidden" name="filter" value="@Model.Filter" />
+                        <button type="submit" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+</div>
