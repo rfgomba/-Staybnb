@@ -78,3 +78,7 @@ body.dash { background: var(--bg); color: var(--ink); min-height: 100vh; }
     .dash-sidebar nav a, .dash-logout { width: auto; }
     .dash-main { margin-left: 0; }
 }
+
+/* Admin tables */
+.avatar-sm { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; background: #e9e9e9; align-items: center; justify-content: center; font-size: .7rem; font-weight: 600; margin-right: 4px; }
+.dash-sidebar nav a .badge { font-size: .7rem; }

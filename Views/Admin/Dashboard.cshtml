@@ -1,5 +1,98 @@
-@{ ViewData["Title"] = "Admin Dashboard"; }
+@model AdminDashboardViewModel
+@{ ViewData["Title"] = "Dashboard Overview"; }
+
 <partial name="_Alerts" />
-<h2>Admin Dashboard</h2>
-<p>Full dashboard comes in Step 6.</p>
-<a asp-action="Applications" class="btn btn-danger">Review Host Requests</a>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value">@Model.TotalUsers</div>
+            <div class="stat-sub text-success">@Model.NewUsersThisMonth new this month</div></div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="stat-card"><div class="stat-label">Pending Host Apps</div><div class="stat-value text-warning">@Model.PendingApplications</div>
+            <div class="stat-sub"><a asp-action="Applications" class="text-decoration-none">Require review</a></div></div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="stat-card"><div class="stat-label">Active Properties</div><div class="stat-value">@Model.ActiveProperties</div>
+            <div class="stat-sub text-muted">of @Model.TotalProperties listings</div></div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="stat-card"><div class="stat-label">Platform Revenue</div><div class="stat-value">@Ui.Rand(Model.PlatformRevenue)</div>
+            <div class="stat-sub text-muted">fees on @Ui.Rand(Model.GrossBookingValue) paid</div></div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="stat-card"><div class="stat-label">Total Bookings</div><div class="stat-value">@Model.TotalBookings</div>
+            <div class="stat-sub text-muted">@Model.PendingBookings pending</div></div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="stat-card"><div class="stat-label">Approved Hosts</div><div class="stat-value">@Model.ApprovedHosts</div>
+            <div class="stat-sub text-muted">Active hosts</div></div>
+    </div>
+</div>
+
+<div class="dash-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">Recent Activity</h6>
+        <a asp-action="ActivityLogs" class="small">View all logs</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>User</th><th>Action</th><th>Type</th><th>Date</th></tr></thead>
+            <tbody>
+            @foreach (var a in Model.RecentActivity)
+            {
+                <tr>
+                    <td>
+                        <span class="avatar-sm">@Ui.Initials(a.User)</span>
+                        @(a.User?.FullName ?? "System")<br /><small class="text-muted ms-4">@a.User?.Email</small>
+                    </td>
+                    <td>@a.Action</td>
+                    <td><span class="badge @Ui.ActivityBadge(a.ActivityType)">@a.ActivityType</span></td>
+                    <td class="text-nowrap">@a.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-6">
+        <div class="dash-card h-100">
+            <h6 class="mb-3">Recent Host Applications</h6>
+            <table class="table align-middle mb-0">
+                <thead><tr><th>Applicant</th><th>Date</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var a in Model.RecentApplications)
+                {
+                    <tr>
+                        <td><strong>@a.ApplicationUser?.FullName</strong><br /><small class="text-muted">@a.Property?.Title</small></td>
+                        <td>@a.AppliedAt.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                        <td><span class="badge @Ui.ApplicationBadge(a.Status)">@a.Status</span></td>
+                        <td><a asp-action="ApplicationDetails" asp-route-id="@a.Id" class="text-dark" title="Review"><i class="fa-solid fa-eye"></i></a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="dash-card h-100">
+            <h6 class="mb-3">Recent Bookings</h6>
+            <table class="table align-middle mb-0">
+                <thead><tr><th>Guest</th><th>Dates</th><th>Status</th><th>Payment</th></tr></thead>
+                <tbody>
+                @foreach (var b in Model.RecentBookings)
+                {
+                    <tr>
+                        <td><strong>@b.Guest?.FullName</strong><br /><small class="text-muted">@b.Property?.Title</small></td>
+                        <td>@b.CheckInDate.ToString("dd MMM") to @b.CheckOutDate.ToString("dd MMM")</td>
+                        <td><span class="badge @Ui.BookingBadge(b.Status)">@b.Status</span></td>
+                        <td><small>@(b.Payment?.Status.ToString() ?? "None")</small></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

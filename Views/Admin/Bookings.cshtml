@@ -1,0 +1,45 @@
+@model AdminBookingsViewModel
+@{ ViewData["Title"] = "Bookings"; }
+
+<partial name="_Alerts" />
+
+<ul class="nav nav-pills mb-3 flex-wrap">
+    @foreach (var tab in Model.Counts)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(tab.Key == Model.Status ? "active bg-dark" : "text-dark")" asp-action="Bookings" asp-route-status="@tab.Key">
+                @(tab.Key == "CheckedIn" ? "Checked In" : tab.Key) <span class="badge bg-secondary ms-1">@tab.Value</span>
+            </a>
+        </li>
+    }
+</ul>
+
+<div class="dash-card">
+    @if (!Model.Bookings.Any())
+    {
+        <p class="text-muted mb-0">No bookings in this list.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead><tr><th>#</th><th>Guest</th><th>Property / Host</th><th>Dates</th><th>Total</th><th>Service fee</th><th>Payment</th><th>Status</th></tr></thead>
+                <tbody>
+                @foreach (var b in Model.Bookings)
+                {
+                    <tr>
+                        <td>@b.Id</td>
+                        <td><strong>@b.Guest?.FullName</strong><br /><small class="text-muted">@b.Guest?.Email</small></td>
+                        <td>@b.Property?.Title<br /><small class="text-muted">@b.Property?.Host?.FullName</small></td>
+                        <td class="text-nowrap">@b.CheckInDate.ToString("dd MMM") to @b.CheckOutDate.ToString("dd MMM yyyy")</td>
+                        <td>@Ui.Rand(b.TotalPrice, 2)</td>
+                        <td>@Ui.Rand(b.ServiceFee, 2)</td>
+                        <td><span class="badge @(b.Payment?.Status == PaymentStatus.Paid ? "bg-success" : "bg-light text-dark border")">@(b.Payment?.Status.ToString() ?? "None")</span></td>
+                        <td><span class="badge @Ui.BookingBadge(b.Status)">@b.Status</span></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -1,0 +1,56 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject Staybnb.Data.ApplicationDbContext Db
+@{
+    var me = await UserManager.GetUserAsync(User);
+    var roleLabel = User.IsInRole(AppRoles.SuperAdmin) ? "SuperAdmin" : "Administrator";
+    var pendingApps = Db.HostApplications.Count(a => a.Status == ApplicationStatus.Pending);
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    string Active(params string[] actions) => actions.Contains(action) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Staybnb Admin</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="dash">
+    <aside class="dash-sidebar">
+        <a class="dash-brand" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house-chimney"></i> staybnb <span>admin</span></a>
+        <nav>
+            <a class="@Active("Dashboard")" asp-controller="Admin" asp-action="Dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+            <a class="@Active("Users")" asp-controller="Admin" asp-action="Users"><i class="fa-solid fa-users"></i> Users</a>
+            <a class="@Active("Applications", "ApplicationDetails")" asp-controller="Admin" asp-action="Applications"><i class="fa-solid fa-file-lines"></i> Host Requests
+                @if (pendingApps > 0) { <span class="badge bg-danger ms-auto">@pendingApps</span> }
+            </a>
+            <a class="@Active("Bookings")" asp-controller="Admin" asp-action="Bookings"><i class="fa-solid fa-calendar-check"></i> Bookings</a>
+            <a class="@Active("Properties")" asp-controller="Admin" asp-action="Properties"><i class="fa-solid fa-house"></i> Properties</a>
+            <a class="@Active("ActivityLogs")" asp-controller="Admin" asp-action="ActivityLogs"><i class="fa-solid fa-clock-rotate-left"></i> Activity Logs</a>
+        </nav>
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            <button type="submit" class="dash-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </form>
+    </aside>
+
+    <div class="dash-main">
+        <header class="dash-header">
+            <h1>@ViewData["Title"]</h1>
+            <div class="dash-user">
+                <span class="avatar">@Ui.Initials(me)</span>
+                <div><strong>@me?.FullName</strong><small>@roleLabel</small></div>
+            </div>
+        </header>
+        <main class="dash-content">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

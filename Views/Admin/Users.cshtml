@@ -1,0 +1,87 @@
+@model AdminUsersViewModel
+@{ ViewData["Title"] = "Users"; }
+
+<partial name="_Alerts" />
+
+<form method="get" class="dash-card mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label small">Search by name or email</label>
+            <input name="search" value="@Model.Search" class="form-control" placeholder="e.g. thabo@gmail.com" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Role</label>
+            <select name="role" class="form-select">
+                <option value="">All roles</option>
+                @foreach (var r in new[] { AppRoles.Guest, AppRoles.Host, AppRoles.Admin, AppRoles.SuperAdmin })
+                {
+                    <option value="@r" selected="@(r == Model.Role)">@r</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-dark flex-grow-1"><i class="fa-solid fa-magnifying-glass"></i> Find</button>
+            <a asp-action="Users" class="btn btn-outline-dark">Clear</a>
+        </div>
+    </div>
+</form>
+
+@if (!Model.IsSuperAdmin)
+{
+    <div class="alert alert-light border small"><i class="fa-solid fa-lock"></i> Only the SuperAdmin can promote Guests to Admin.</div>
+}
+
+<div class="dash-card">
+    <p class="small text-muted">@Model.Users.Count users</p>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>User</th><th>Roles</th><th>Joined</th><th>Listings</th><th>Bookings</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            @foreach (var row in Model.Users)
+            {
+                var u = row.User;
+                <tr>
+                    <td><span class="avatar-sm">@Ui.Initials(u)</span> <strong>@u.FullName</strong><br /><small class="text-muted ms-4">@u.Email</small></td>
+                    <td>
+                        @foreach (var r in row.Roles)
+                        {
+                            <span class="badge @Ui.RoleBadge(r) me-1">@r</span>
+                        }
+                    </td>
+                    <td>@u.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                    <td>@row.Properties</td>
+                    <td>@row.Bookings</td>
+                    <td>
+                        @if (row.IsLocked)
+                        {
+                            <span class="badge bg-danger"><i class="fa-solid fa-lock"></i> Locked</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-1">
+                            @if (Model.IsSuperAdmin && row.IsGuest)
+                            {
+                                <form asp-action="PromoteToAdmin" asp-route-id="@u.Id" method="post" onsubmit="return confirm('Promote @u.FullName to Admin?');">
+                                    <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-user-shield"></i> Make Admin</button>
+                                </form>
+                            }
+                            @if (!row.IsStaff && u.Id != Model.CurrentUserId)
+                            {
+                                <form asp-action="ToggleLock" asp-route-id="@u.Id" method="post" onsubmit="return confirm('@(row.IsLocked ? "Unlock" : "Lock") this account?');">
+                                    <button type="submit" class="btn btn-sm @(row.IsLocked ? "btn-outline-success" : "btn-outline-danger")">
+                                        <i class="fa-solid @(row.IsLocked ? "fa-lock-open" : "fa-lock")"></i> @(row.IsLocked ? "Unlock" : "Lock")
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

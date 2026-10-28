@@ -1,9 +1,11 @@
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<ApplicationUser> UserManager
+@inject Staybnb.Data.ApplicationDbContext Db
 @{
     var me = await UserManager.GetUserAsync(User);
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var pendingRequests = me == null ? 0 : Db.Bookings.Count(b => b.Property!.HostId == me.Id && b.Status == BookingStatus.Pending);
     string Active(string c, params string[] actions) =>
         controller == c && (actions.Length == 0 || actions.Contains(action)) ? "active" : "";
 }
@@ -23,6 +25,9 @@
         <nav>
             <a class="@Active("Host", "Dashboard")" asp-controller="Host" asp-action="Dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
             <a class="@Active("Host", "Properties", "Edit", "CheckIn")" asp-controller="Host" asp-action="Properties"><i class="fa-solid fa-house"></i> My Properties</a>
+            <a class="@Active("HostBookings")" asp-controller="HostBookings" asp-action="Index"><i class="fa-solid fa-calendar-check"></i> Booking Requests
+                @if (pendingRequests > 0) { <span class="badge bg-danger ms-auto">@pendingRequests</span> }
+            </a>
             <a class="@Active("HostApplication", "Create")" asp-controller="HostApplication" asp-action="Create"><i class="fa-solid fa-plus"></i> Add Property</a>
             <a class="@Active("HostApplication", "Status")" asp-controller="HostApplication" asp-action="Status"><i class="fa-solid fa-file-lines"></i> Applications</a>
         </nav>

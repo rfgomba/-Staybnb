@@ -1,3 +1,50 @@
+@model List<Booking>
 @{ ViewData["Title"] = "My Trips"; }
-<h2>My Trips</h2>
-<p>Only users in the Guest role can see this page. Bookings come in Step 5.</p>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<link rel="stylesheet" href="~/css/staybnb.css" asp-append-version="true" />
+
+<partial name="_Alerts" />
+<h2 class="mb-3">My Trips</h2>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted py-5">
+        <p>No trips booked yet.</p>
+        <a asp-controller="Properties" asp-action="Index" class="btn btn-brand">Start exploring</a>
+    </div>
+}
+
+<div class="row g-3">
+    @foreach (var b in Model)
+    {
+        var img = b.Property?.Images.FirstOrDefault()?.ImageUrl;
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm overflow-hidden">
+                @if (img != null) { <img src="@img" class="trip-thumb" alt="" /> }
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1">@b.Property?.Title</h6>
+                        <span class="badge @Ui.BookingBadge(b.Status) align-self-start">@b.Status</span>
+                    </div>
+                    <div class="small text-muted mb-2">
+                        <i class="fa-solid fa-calendar"></i> @b.CheckInDate.ToString("dd MMM") to @b.CheckOutDate.ToString("dd MMM yyyy")
+                        <span class="ms-1">(@b.Nights @(b.Nights == 1 ? "night" : "nights"))</span>
+                    </div>
+                    <div class="small mb-2">
+                        <strong>@Ui.Rand(b.TotalPrice, 2)</strong>
+                        <span class="text-muted ms-1">Payment: @(b.Payment?.Status.ToString() ?? "None")</span>
+                    </div>
+                    @if (b.Status == BookingStatus.Approved && b.Payment?.Status != PaymentStatus.Paid)
+                    {
+                        <div class="alert alert-warning py-1 small mb-2">Approved. Payment needed.</div>
+                    }
+                    else if (b.Status == BookingStatus.Approved && b.GuestCheckIn?.Status != CheckInStatus.Verified)
+                    {
+                        <div class="alert alert-info py-1 small mb-2">Check-in: @(b.GuestCheckIn?.Status.ToString() ?? "Not started")</div>
+                    }
+                    <a asp-action="Booking" asp-route-id="@b.Id" class="btn btn-sm btn-outline-dark w-100">View booking</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

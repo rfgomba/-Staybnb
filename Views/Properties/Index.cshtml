@@ -1,0 +1,101 @@
+@model PropertySearchViewModel
+@{ ViewData["Title"] = "Find your next stay"; }
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<link rel="stylesheet" href="~/css/staybnb.css" asp-append-version="true" />
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="mb-4">
+    <div class="search-pill mx-auto">
+        <div class="field">
+            <label for="city">Where</label>
+            <input id="city" name="city" value="@Model.City" list="city-list" placeholder="Search destinations" />
+            <datalist id="city-list">
+                @foreach (var c in Model.Cities) { <option value="@c"></option> }
+            </datalist>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+            <label for="type">Type</label>
+            <select id="type" name="type">
+                <option value="">Any type</option>
+                @foreach (var t in HostApplicationViewModel.PropertyTypes)
+                {
+                    <option value="@t" selected="@(t == Model.Type)">@t</option>
+                }
+            </select>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+            <label for="guests">Who</label>
+            <input id="guests" name="guests" type="number" min="1" value="@Model.Guests" placeholder="Add guests" />
+        </div>
+        <button type="submit" class="btn-search" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </div>
+</form>
+
+<h1 class="hero-title mb-3">Relax. Unwind. Choose your next stay.</h1>
+
+<div class="type-chips mb-3">
+    <a asp-action="Index" asp-route-city="@Model.City" asp-route-guests="@Model.Guests" class="@(string.IsNullOrEmpty(Model.Type) ? "active" : "")">All</a>
+    @foreach (var t in HostApplicationViewModel.PropertyTypes)
+    {
+        <a asp-action="Index" asp-route-type="@t" asp-route-city="@Model.City" asp-route-guests="@Model.Guests" class="@(t == Model.Type ? "active" : "")">@t</a>
+    }
+</div>
+
+@if (!Model.Results.Any())
+{
+    <div class="text-center text-muted py-5">
+        <i class="fa-solid fa-house-circle-xmark fa-2x mb-2"></i>
+        <p>No stays match your search. Try another city or type.</p>
+        <a asp-action="Index" class="btn btn-outline-dark btn-sm">Clear filters</a>
+    </div>
+}
+
+<div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 mb-5">
+    @foreach (var p in Model.Results)
+    {
+        var carouselId = $"carousel-{p.Id}";
+        var rating = p.Reviews.Any() ? p.Reviews.Average(r => r.Rating) : 0;
+        <div class="col">
+            <div class="listing-card">
+                <div class="listing-img">
+                    <div id="@carouselId" class="carousel slide">
+                        @if (p.Images.Count > 1)
+                        {
+                            <div class="carousel-indicators mb-1">
+                                @for (var i = 0; i < p.Images.Count; i++)
+                                {
+                                    <button type="button" data-bs-target="#@carouselId" data-bs-slide-to="@i" class="@(i == 0 ? "active" : "")" aria-label="Photo @(i + 1)"></button>
+                                }
+                            </div>
+                        }
+                        <div class="carousel-inner">
+                            @{ var first = true; }
+                            @foreach (var img in p.Images)
+                            {
+                                <div class="carousel-item @(first ? "active" : "")">
+                                    <a asp-action="View" asp-route-id="@p.Id"><img src="@img.ImageUrl" alt="@p.Title" loading="lazy" /></a>
+                                </div>
+                                first = false;
+                            }
+                        </div>
+                        @if (p.Images.Count > 1)
+                        {
+                            <button class="carousel-control-prev" type="button" data-bs-target="#@carouselId" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#@carouselId" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+                        }
+                    </div>
+                    <span class="photo-badge"><i class="fa-solid fa-camera"></i> @p.Images.Count</span>
+                </div>
+                <a asp-action="View" asp-route-id="@p.Id" class="listing-meta d-block">
+                    <div class="loc"><i class="fa-solid fa-location-dot"></i> @p.City, South Africa</div>
+                    <div class="title">@p.Title</div>
+                    <div><strong>@Ui.Rand(p.PricePerNight)</strong> <span class="text-muted">per night</span></div>
+                    <div><i class="fa-solid fa-star text-brand"></i> @rating.ToString("0.0") (@p.Reviews.Count)</div>
+                </a>
+            </div>
+        </div>
+    }
+</div>

@@ -41,6 +41,7 @@ builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 builder.Services.AddControllersWithViews();
 

@@ -1,0 +1,117 @@
+@model Booking
+@{
+    ViewData["Title"] = $"Booking #{Model.Id}";
+    var p = Model.Property!;
+    var checkIn = Model.GuestCheckIn;
+    var paid = Model.Payment?.Status == PaymentStatus.Paid;
+    var subtotal = Model.TotalPrice - Model.CleaningFee - Model.ServiceFee;
+    var canCheckIn = Model.Status == BookingStatus.Approved && paid && checkIn?.Status == CheckInStatus.Verified;
+}
+
+<partial name="_Alerts" />
+<a asp-action="Index" class="text-decoration-none">&larr; Booking Requests</a>
+
+<div class="d-flex justify-content-between align-items-center mt-2 mb-3">
+    <h4 class="mb-0">@p.Title</h4>
+    <span class="badge fs-6 @Ui.BookingBadge(Model.Status)">@Model.Status</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="dash-card mb-3">
+            <h6 class="text-muted">Guest</h6>
+            <p class="mb-0"><strong>@Model.Guest?.FullName</strong></p>
+            <p class="small text-muted mb-3">@Model.Guest?.Email</p>
+            <div class="row small">
+                <div class="col-4"><span class="text-muted">Check-in</span><div class="fw-semibold">@Model.CheckInDate.ToString("dd MMM yyyy")</div></div>
+                <div class="col-4"><span class="text-muted">Checkout</span><div class="fw-semibold">@Model.CheckOutDate.ToString("dd MMM yyyy")</div></div>
+                <div class="col-4"><span class="text-muted">Guests</span><div class="fw-semibold">@Model.NumberOfGuests</div></div>
+            </div>
+        </div>
+
+        <div class="dash-card mb-3">
+            <h6 class="mb-3">Check-in documents</h6>
+            @if (checkIn == null || !checkIn.Documents.Any())
+            {
+                <p class="text-muted mb-0">The guest has not submitted check-in documents yet.</p>
+            }
+            else
+            {
+                <p class="small">Check-in status: <strong>@checkIn.Status</strong></p>
+                foreach (var d in checkIn.Documents)
+                {
+                    var css = d.Status switch { DocumentStatus.Verified => "bg-success", DocumentStatus.Rejected => "bg-danger", _ => "bg-warning text-dark" };
+                    <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2">
+                        <div>
+                            <i class="fa-solid fa-id-card me-1"></i> @d.DocumentType
+                            <span class="badge @css ms-1">@d.Status</span>
+                            <a asp-controller="Documents" asp-action="Open" asp-route-id="@d.Id" target="_blank" class="ms-2 small">Open</a>
+                        </div>
+                        @if (d.Status == DocumentStatus.Pending && Model.Status == BookingStatus.Approved)
+                        {
+                            <div class="d-flex gap-1">
+                                <form asp-action="VerifyDocument" asp-route-id="@Model.Id" method="post">
+                                    <input type="hidden" name="documentId" value="@d.Id" />
+                                    <input type="hidden" name="approve" value="true" />
+                                    <button type="submit" class="btn btn-sm btn-success">Verify</button>
+                                </form>
+                                <form asp-action="VerifyDocument" asp-route-id="@Model.Id" method="post">
+                                    <input type="hidden" name="documentId" value="@d.Id" />
+                                    <input type="hidden" name="approve" value="false" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="dash-card mb-3">
+            <h6 class="mb-3">Payment</h6>
+            <div class="d-flex justify-content-between small"><span>@Ui.Rand(p.PricePerNight) x @Model.Nights nights</span><span>@Ui.Rand(subtotal, 2)</span></div>
+            <div class="d-flex justify-content-between small"><span>Cleaning fee</span><span>@Ui.Rand(Model.CleaningFee, 2)</span></div>
+            <div class="d-flex justify-content-between small"><span>Service fee (platform)</span><span>@Ui.Rand(Model.ServiceFee, 2)</span></div>
+            <hr class="my-2" />
+            <div class="d-flex justify-content-between fw-bold"><span>Guest pays</span><span>@Ui.Rand(Model.TotalPrice, 2)</span></div>
+            <div class="d-flex justify-content-between text-success small"><span>You earn</span><span>@Ui.Rand(Model.TotalPrice - Model.ServiceFee, 2)</span></div>
+            <div class="small mt-2">Status: <span class="badge @(paid ? "bg-success" : "bg-light text-dark border")">@(Model.Payment?.Status.ToString() ?? "None")</span></div>
+        </div>
+
+        <div class="dash-card">
+            <h6 class="mb-3">Actions</h6>
+            @if (Model.Status == BookingStatus.Pending)
+            {
+                <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="mb-2">
+                    <button type="submit" class="btn btn-success w-100">Approve booking</button>
+                </form>
+                <form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+                    <textarea name="reason" class="form-control mb-2" rows="2" maxlength="300" placeholder="Optional reason for the guest"></textarea>
+                    <button type="submit" class="btn btn-outline-danger w-100">Reject booking</button>
+                </form>
+            }
+            else if (Model.Status == BookingStatus.Approved)
+            {
+                <ul class="small mb-3">
+                    <li>Payment: @(paid ? "received" : "waiting for guest")</li>
+                    <li>Documents: @(checkIn?.Status == CheckInStatus.Verified ? "all verified" : "not verified yet")</li>
+                </ul>
+                <form asp-action="CheckInGuest" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-brand w-100" disabled="@(!canCheckIn)">Mark guest as Checked In</button>
+                </form>
+            }
+            else if (Model.Status == BookingStatus.CheckedIn)
+            {
+                <form asp-action="Complete" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-dark w-100">Mark stay as Completed</button>
+                </form>
+            }
+            else
+            {
+                <p class="text-muted small mb-0">No actions available.</p>
+            }
+        </div>
+    </div>
+</div>

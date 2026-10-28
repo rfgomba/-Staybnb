@@ -1,0 +1,48 @@
+@model HostBookingsViewModel
+@{ ViewData["Title"] = "Booking Requests"; }
+
+<partial name="_Alerts" />
+
+<ul class="nav nav-pills mb-3 flex-wrap">
+    @foreach (var tab in Model.Counts)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(tab.Key == Model.Status ? "active bg-dark" : "text-dark")" asp-action="Index" asp-route-status="@tab.Key">
+                @(tab.Key == "CheckedIn" ? "Checked In" : tab.Key) <span class="badge bg-secondary ms-1">@tab.Value</span>
+            </a>
+        </li>
+    }
+</ul>
+
+<div class="dash-card">
+    @if (!Model.Bookings.Any())
+    {
+        <p class="text-muted mb-0">No bookings in this list.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr><th>Guest</th><th>Property</th><th>Dates</th><th>Guests</th><th>Total</th><th>Payment</th><th>Check-in</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody>
+                @foreach (var b in Model.Bookings)
+                {
+                    <tr>
+                        <td><strong>@b.Guest?.FullName</strong><br /><small class="text-muted">@b.Guest?.Email</small></td>
+                        <td>@b.Property?.Title</td>
+                        <td>@b.CheckInDate.ToString("dd MMM") to @b.CheckOutDate.ToString("dd MMM")<br /><small class="text-muted">@b.Nights nights</small></td>
+                        <td>@b.NumberOfGuests</td>
+                        <td>@Ui.Rand(b.TotalPrice)</td>
+                        <td><span class="badge @(b.Payment?.Status == PaymentStatus.Paid ? "bg-success" : "bg-light text-dark border")">@(b.Payment?.Status.ToString() ?? "None")</span></td>
+                        <td><small>@(b.GuestCheckIn?.Status.ToString() ?? "Not started")</small></td>
+                        <td><span class="badge @Ui.BookingBadge(b.Status)">@b.Status</span></td>
+                        <td class="text-end"><a asp-action="Details" asp-route-id="@b.Id" class="btn btn-sm btn-outline-dark">Open</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

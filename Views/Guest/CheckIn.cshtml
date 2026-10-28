@@ -1,0 +1,136 @@
+@model GuestCheckInViewModel
+@{
+    ViewData["Title"] = "Check-in";
+    var docs = Model.CheckIn.Documents.ToList();
+}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<link rel="stylesheet" href="~/css/staybnb.css" asp-append-version="true" />
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <partial name="_Alerts" />
+        <a asp-action="Booking" asp-route-id="@Model.Booking.Id" class="text-decoration-none">&larr; Back to booking</a>
+        <h2 class="mt-2 mb-1">@Model.ProcessTitle</h2>
+        <p class="text-muted">@Model.Booking.Property?.Title, @Model.Booking.CheckInDate.ToString("dd MMM") to @Model.Booking.CheckOutDate.ToString("dd MMM yyyy")</p>
+
+        @if (Model.IsLocked)
+        {
+            <div class="alert alert-success">Your documents are verified. The host will check you in on arrival.</div>
+        }
+        else if (Model.CheckIn.Status == CheckInStatus.Submitted)
+        {
+            <div class="alert alert-info">Submitted and awaiting host verification. You can still replace a document below.</div>
+        }
+
+        <form asp-action="CheckIn" asp-route-id="@Model.Booking.Id" method="post" enctype="multipart/form-data" id="wizard">
+            <div class="wizard-progress">
+                @for (var i = 0; i < Model.Steps.Count; i++) { <span data-bar="@i"></span> }
+            </div>
+
+            @for (var i = 0; i < Model.Steps.Count; i++)
+            {
+                var step = Model.Steps[i];
+                var existing = docs.FirstOrDefault(d => d.DocumentType == step.DocumentType);
+                <div class="wizard-step card shadow-sm p-4 mb-3" data-step="@i" data-type="@step.StepType" data-has-doc="@((existing != null && existing.Status != DocumentStatus.Rejected).ToString().ToLower())">
+                    <small class="text-muted">Step @(i + 1) of @Model.Steps.Count</small>
+                    <h5 class="mt-1">@step.Name</h5>
+                    @if (!string.IsNullOrWhiteSpace(step.Description))
+                    {
+                        <p style="white-space:pre-line">@step.Description</p>
+                    }
+
+                    @if (step.StepType == CheckInStepType.Document)
+                    {
+                        if (existing != null)
+                        {
+                            var css = existing.Status switch
+                            {
+                                DocumentStatus.Verified => "success",
+                                DocumentStatus.Rejected => "danger",
+                                _ => "warning"
+                            };
+                            <div class="alert alert-@css py-2 small">
+                                Uploaded @step.DocumentType: <strong>@existing.Status</strong>
+                                <a asp-controller="Documents" asp-action="Open" asp-route-id="@existing.Id" target="_blank" class="ms-2">View</a>
+                            </div>
+                        }
+                        if (!Model.IsLocked)
+                        {
+                            <label class="form-label">@(existing == null ? "Upload" : "Replace") @step.DocumentType</label>
+                            <input type="file" name="@($"doc_{i}")" class="form-control" accept=".jpg,.jpeg,.png,.webp,.pdf" />
+                            <div class="form-text">JPG, PNG, WEBP or PDF, up to 5MB. Only you, your host and Staybnb admins can view it.</div>
+                        }
+                    }
+                    else if (step.StepType == CheckInStepType.Agreement && !Model.IsLocked)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="@($"agree_{i}")" id="@($"agree_{i}")" />
+                            <label class="form-check-label" for="@($"agree_{i}")">I have read and accept this</label>
+                        </div>
+                    }
+
+                    <div id="step-error-@i" class="text-danger small mt-2"></div>
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <button type="button" class="btn btn-outline-dark" data-nav="-1" disabled="@(i == 0)">Back</button>
+                        @if (i < Model.Steps.Count - 1)
+                        {
+                            <button type="button" class="btn btn-dark" data-nav="1">Next</button>
+                        }
+                        else if (!Model.IsLocked)
+                        {
+                            <button type="submit" class="btn btn-brand">Submit check-in</button>
+                        }
+                    </div>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const steps = [...document.querySelectorAll('.wizard-step')];
+        const bars = [...document.querySelectorAll('[data-bar]')];
+        const locked = @Model.IsLocked.ToString().ToLower();
+        let current = 0;
+
+        function show(i) {
+            steps.forEach((s, n) => s.classList.toggle('active', n === i));
+            bars.forEach((b, n) => b.classList.toggle('on', n <= i));
+            current = i;
+        }
+
+        // Light client-side check per step; the server validates everything again
+        function stepIsComplete(step) {
+            if (locked) return true;
+            const i = step.dataset.step;
+            const error = document.getElementById(`step-error-${i}`);
+            error.textContent = '';
+            if (step.dataset.type === 'Document') {
+                const file = step.querySelector('input[type=file]');
+                if (step.dataset.hasDoc !== 'true' && (!file || file.files.length === 0)) {
+                    error.textContent = 'Please choose a file to upload.';
+                    return false;
+                }
+            }
+            if (step.dataset.type === 'Agreement') {
+                const box = step.querySelector('input[type=checkbox]');
+                if (box && !box.checked) { error.textContent = 'Please accept to continue.'; return false; }
+            }
+            return true;
+        }
+
+        document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => {
+            const dir = +btn.dataset.nav;
+            if (dir > 0 && !stepIsComplete(steps[current])) return;
+            show(current + dir);
+        }));
+
+        document.getElementById('wizard').addEventListener('submit', e => {
+            if (!stepIsComplete(steps[current])) e.preventDefault();
+        });
+
+        show(0);
+    </script>
+}
