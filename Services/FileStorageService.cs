@@ -38,6 +38,8 @@ public class FileStorageService : IFileStorageService
 
     public void Delete(string relativeUrl)
     {
+        // Only user uploads are ever deleted (never shared files such as /images/demo)
+        if (!relativeUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)) return;
         var path = Path.Combine(_env.WebRootPath, relativeUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
         if (File.Exists(path)) File.Delete(path);
     }

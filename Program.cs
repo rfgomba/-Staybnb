@@ -61,6 +61,10 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
     await RoleSeeder.SeedAsync(scope.ServiceProvider);
+
+    // Demo marketplace for marking and testing (set "SeedDemoData": false to skip)
+    if (app.Configuration.GetValue("SeedDemoData", true))
+        await DemoDataSeeder.SeedAsync(scope.ServiceProvider);
 }
 
 if (app.Environment.IsDevelopment())
@@ -72,6 +76,9 @@ else
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// Friendly 404 and other error pages
+app.UseStatusCodePagesWithReExecute("/Home/StatusCode/{0}");
 
 app.UseRequestLocalization(new RequestLocalizationOptions
 {

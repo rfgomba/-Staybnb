@@ -2,46 +2,81 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav">
+<div class="d-flex align-items-center gap-2">
 @if (SignInManager.IsSignedIn(User))
 {
     var appUser = await UserManager.GetUserAsync(User);
     var isAdmin = User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.SuperAdmin);
-    var role = User.IsInRole(AppRoles.SuperAdmin) ? "SuperAdmin"
-             : User.IsInRole(AppRoles.Admin) ? "Admin"
-             : User.IsInRole(AppRoles.Host) ? "Host" : "Guest";
+    var isHost = User.IsInRole(AppRoles.Host);
+    var role = User.IsInRole(AppRoles.SuperAdmin) ? "SuperAdmin" : isAdmin ? "Admin" : isHost ? "Host" : "Guest";
 
     if (isAdmin)
     {
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Admin" asp-action="Dashboard">Admin Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Admin" asp-action="Applications">Host Requests</a></li>
+        <a class="header-link d-none d-md-inline" asp-controller="Admin" asp-action="Dashboard">Admin Dashboard</a>
     }
-    else if (User.IsInRole(AppRoles.Host))
+    else if (isHost)
     {
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Host" asp-action="Dashboard">Host Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="HostApplication" asp-action="Create">Add Property</a></li>
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="HostApplication" asp-action="Status">My Applications</a></li>
+        <a class="header-link d-none d-md-inline" asp-controller="Host" asp-action="Dashboard">Switch to hosting</a>
     }
     else
     {
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="HostApplication" asp-action="Status">Host Application Status</a></li>
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="HostApplication" asp-action="Create">Become a Host</a></li>
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Guest" asp-action="Trips">My Trips</a></li>
+        <a class="header-link d-none d-md-inline" asp-controller="HostApplication" asp-action="Status">Host Application Status</a>
+        <a class="header-link d-none d-md-inline" asp-controller="HostApplication" asp-action="Create">Become a Host</a>
     }
 
-    <li class="nav-item d-flex align-items-center">@await Component.InvokeAsync("HeaderIcons")</li>
-    <li class="nav-item">
-        <span class="nav-link text-dark">@appUser?.FullName <span class="badge bg-danger">@role</span></span>
-    </li>
-    <li class="nav-item">
-        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-            <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
-        </form>
-    </li>
+    @await Component.InvokeAsync("HeaderIcons")
+
+    <div class="dropdown">
+        <button class="user-menu" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-bars"></i>
+            <span class="user-avatar">@Ui.Initials(appUser)</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li class="px-3 py-2">
+                <strong>@appUser?.FullName</strong>
+                <div><span class="badge bg-danger">@role</span></div>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            @if (isAdmin)
+            {
+                <li><a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">Admin Dashboard</a></li>
+                <li><a class="dropdown-item" asp-controller="Admin" asp-action="Applications">Host Requests</a></li>
+            }
+            else if (isHost)
+            {
+                <li><a class="dropdown-item" asp-controller="Host" asp-action="Dashboard">Host Dashboard</a></li>
+                <li><a class="dropdown-item" asp-controller="HostBookings" asp-action="Index">Booking Requests</a></li>
+                <li><a class="dropdown-item" asp-controller="HostApplication" asp-action="Create">Add Property</a></li>
+            }
+            else
+            {
+                <li><a class="dropdown-item" asp-controller="Guest" asp-action="Trips">My Trips</a></li>
+                <li><a class="dropdown-item" asp-controller="HostApplication" asp-action="Create">Become a Host</a></li>
+                <li><a class="dropdown-item" asp-controller="HostApplication" asp-action="Status">Host Application Status</a></li>
+            }
+            <li><a class="dropdown-item" asp-controller="Messages" asp-action="Index">Messages</a></li>
+            <li><a class="dropdown-item" asp-controller="Notifications" asp-action="Index">Notifications</a></li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="dropdown-item text-danger">Logout</button>
+                </form>
+            </li>
+        </ul>
+    </div>
 }
 else
 {
-    <li class="nav-item"><a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Sign up</a></li>
-    <li class="nav-item"><a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Log in</a></li>
+    <a class="header-link d-none d-md-inline" asp-controller="Account" asp-action="Register">Become a Host</a>
+    <div class="dropdown">
+        <button class="user-menu" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-bars"></i>
+            <span class="user-avatar"><i class="fa-solid fa-user"></i></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><a class="dropdown-item fw-semibold" asp-controller="Account" asp-action="Register">Sign up</a></li>
+            <li><a class="dropdown-item" asp-controller="Account" asp-action="Login">Log in</a></li>
+        </ul>
+    </div>
 }
-</ul>
+</div>
